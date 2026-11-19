@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تصنيف أهلاوي | by Kraliçe 💚</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Tahoma",sans-serif;background:linear-gradient(135deg,#061f18,#0b3b2d);color:#fff;min-height:100vh}
+.wrap{max-width:1100px;margin:auto;padding:28px 18px 50px}.brand{text-align:center;margin-bottom:24px}.brand h1{margin:0;font-size:34px}.brand p{opacity:.75;margin:8px 0}
+.panel{background:#f4ead0;color:#222;border-radius:24px;padding:20px;box-shadow:0 20px 60px #0006}
+.tier{display:grid;grid-template-columns:125px 1fr;min-height:92px;border-bottom:1px solid #cdbf9d}.tier:last-child{border:0}.label{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#fff}.players{padding:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;min-height:92px}.card{width:82px;background:#fff;border-radius:14px;padding:6px;color:#111;text-align:center;cursor:grab;box-shadow:0 5px 12px #0002;user-select:none}.card:active{cursor:grabbing}.card img{width:70px;height:70px;object-fit:cover;border-radius:10px;background:#ddd}.card b{font-size:11px;display:block;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.s{background:#7d2020}.a{background:#96551f}.b{background:#a88318}.c{background:#3c7750}.d{background:#24553b}.e{background:#31516d}.f{background:#5d4b58}
+.pool{margin-top:18px;background:#0d2c24;border:1px solid #ffffff20;border-radius:20px;padding:16px}.pool h2{font-size:16px;margin:0 0 12px}.add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.add input{flex:1;min-width:180px;padding:11px;border:0;border-radius:10px}.add button{border:0;border-radius:10px;padding:11px 16px;background:#10c7a0;color:#05251d;font-weight:800}.hint{font-size:12px;opacity:.65;margin-top:8px}.dragover{outline:3px dashed #10c7a0;outline-offset:-4px}
+@media(max-width:650px){.tier{grid-template-columns:82px 1fr}.label{font-size:15px}.card{width:70px}.card img{width:58px;height:58px}.brand h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="brand"><h1>تصنيف أهلاوي 💚</h1><p>رتّب لاعبين الأهلي من وجهة نظرك</p></header>
+<section class="panel" id="board"></section>
+<section class="pool">
+<h2>اللاعبون</h2>
+<div class="add">
+  <input id="name" placeholder="اسم اللاعب">
+  <label style="background:#fff;color:#123;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer">
+    اختاري صورة من الألبوم <input id="photo" type="file" accept="image/*" hidden>
+  </label>
+  <button onclick="addPlayer()">إضافة لاعب</button>
+</div>
+<div id="photoName" class="hint">ما اخترتِ صورة بعد</div>
+<div id="pool" class="players"></div>
+<div class="hint">اسحب اللاعب وضعه في المستوى الذي تراه مناسبًا. الترتيب يُحفظ تلقائيًا على جهازك.</div>
+</section>
+</div>
+<footer style="text-align:center;padding:22px 10px 8px;color:#c7dfd5;font-size:13px">© 2026 <b style="color:#fff">by Kraliçe</b> · جميع الحقوق محفوظة</footer>
+<script>
+const tiers=[
+["s","أسطوري"],["a","تاريخي"],["b","ممتاز"],["c","جيد"],["d","عادي"],["e","سيئ"],["f","الأسوأ"]
+];
+const STORAGE_KEY="ahliTier_v2";
+let data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+if(!data)data={pool:[],tiers:Object.fromEntries(tiers.map(x=>[x[0],[]]))};
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}
+function card(p,i,where){const d=document.createElement("div");d.className="card";d.draggable=true;d.dataset.i=i;d.dataset.where=where;
+d.innerHTML=`<img src="${p.img||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22%3E💚%3C/text%3E%3C/svg%3E'}"><b>${p.n}</b>`;
+d.ondragstart=e=>{e.dataTransfer.setData("text/plain",JSON.stringify({i,where}))};
+return d}
+function render(){const board=document.getElementById("board");board.innerHTML="";
+tiers.forEach(([k,label])=>{let r=document.createElement("div");r.className="tier";r.innerHTML=`<div class="label ${k}">${label}</div><div class="players" data-drop="${k}"></div>`;board.appendChild(r);
+let zone=r.querySelector(".players");data.tiers[k].forEach((p,i)=>zone.appendChild(card(p,i,k)));drop(zone,k)});
+const pool=document.getElementById("pool");pool.innerHTML="";data.pool.forEach((p,i)=>pool.appendChild(card(p,i,"pool")));drop(pool,"pool")}
+function drop(el,target){el.ondragover=e=>{e.preventDefault();el.classList.add("dragover")};el.ondragleave=()=>el.classList.remove("dragover");el.ondrop=e=>{e.preventDefault();el.classList.remove("dragover");let x=JSON.parse(e.dataTransfer.getData("text/plain"));let p=(x.where==="pool"?data.pool:data.tiers[x.where]).splice(x.i,1)[0];data.tiers[target].push(p);save();render()}}
+const photoInput=document.getElementById("photo");
+photoInput.addEventListener("change",()=>{document.getElementById("photoName").textContent=photoInput.files[0]?.name||"ما اخترتِ صورة بعد"});
+function compressImage(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>{const im=new Image();im.onload=()=>{const max=420,scale=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement("canvas");c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext("2d").drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL("image/jpeg",0.78))};im.onerror=reject;im.src=reader.result};reader.onerror=reject;reader.readAsDataURL(file)})}
+async function addPlayer(){let n=document.getElementById("name").value.trim(),file=photoInput.files[0];if(!n){alert("اكتبي اسم اللاعب أولاً");return}let img="";if(file){try{img=await compressImage(file)}catch(e){alert("ما قدرت أقرأ الصورة، جربي صورة ثانية");return}}data.pool.push({n,img});document.getElementById("name").value="";photoInput.value="";document.getElementById("photoName").textContent="ما اخترتِ صورة بعد";try{save()}catch(e){alert("مساحة الحفظ ممتلئة. جربي صورة أصغر.");data.pool.pop();return}render()}
+render();
+</script>
+</body></html>
